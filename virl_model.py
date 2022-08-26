@@ -83,7 +83,7 @@ class ViRLModel(nn.Module):
         video1_p = self._decode(e_p_seq)
 
         l_sns = self.loss_sns(h_i_seq[-1], h_p_seq[-1], h_n_seq[-1])
-        l_sni = self.loss_sni(e_i_seq, e_p_seq, e_p_seq)
+        l_sni = self.loss_sni(e_i_seq, e_p_seq, e_n_seq)
         l_raes = self.loss_vae(video_i, video0_i) + self.loss_vae(video_p, video0_p)
         l_vaei = self.loss_vae(video_i, video1_i) + self.loss_vae(video_p, video1_p)
         loss = 0.7 * l_sns
