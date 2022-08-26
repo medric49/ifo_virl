@@ -2,6 +2,8 @@ import shutil
 import time
 import warnings
 
+import imageio
+
 import datasets
 import virl_model
 
@@ -99,8 +101,6 @@ class Workspace:
 
         self.video_recorder = VideoRecorder(
             self.work_dir if self.cfg.save_video else None)
-        self.train_video_recorder = TrainVideoRecorder(
-            self.work_dir if self.cfg.save_train_video else None)
 
     @property
     def global_step(self):
@@ -161,22 +161,20 @@ class Workspace:
         episode_step = 0
         time_step = self.train_env.reset()
         self.episode_time_steps = [time_step]
-        self.train_video_recorder.init(time_step.observation)
 
         metrics = None
         while train_until_step(self.global_step):
             if time_step.last():
                 self._global_episode += 1
-                self.train_video_recorder.save(f'{self.global_frame}.mp4')
 
-                episode_rewards = self.train_env.compute_episode_reward()
+                episode_rewards, agent_obs, real_obs, expert_obs = self.train_env.compute_obs_and_rewards()
                 for i, ts in enumerate(self.episode_time_steps):
                     reward = episode_rewards[i] if i != 0 else 0.
                     self.replay_storage.add(ts._replace(reward=reward))
 
-                agent_obs, real_obs = self.train_env.make_multivers_observations()
-                obs = np.array([agent_obs, real_obs], dtype=np.uint8)
-                np.save(self.expert_video_dir / f'{int(time.time() * 1000)}', obs)
+                imageio.mimwrite(self.work_dir / 'train_video', np.concatenate([agent_obs, real_obs, expert_obs], axis=2), format='mp4', fps=20)
+                np.save(self.expert_video_dir / f'{int(time.time() * 1000)}', np.array([agent_obs, real_obs, expert_obs], dtype=np.uint8))
+
                 self.dataset.update_files(max_num_video=self.cfg.max_num_encoder_videos)
 
                 # wait until all the metrics schema is populated
@@ -202,7 +200,6 @@ class Workspace:
                 episode_step = 0
                 time_step = self.train_env.reset()
                 self.episode_time_steps = [time_step]
-                self.train_video_recorder.init(time_step.observation)
 
             # try to evaluate
             if eval_every_step(self.global_step):
@@ -221,7 +218,7 @@ class Workspace:
                 video_i = video_i.to(dtype=torch.float, device=utils.device())
                 video_p = video_p.to(dtype=torch.float, device=utils.device())
                 video_n = video_n.to(dtype=torch.float, device=utils.device())
-                # video_i, video_p, video_n = datasets.VideoDataset.augment(video_i, video_p, video_n)
+                video_i, video_p, video_n = datasets.VideoDataset.augment(video_i, video_p, video_n)
 
                 enc_metrics = self.encoder.update(video_i, video_p, video_n)
                 self.logger.log_metrics(enc_metrics, self.global_frame, ty='train')
@@ -234,7 +231,6 @@ class Workspace:
             # take env step
             time_step = self.train_env.step(action)
             self.episode_time_steps.append(time_step)
-            self.train_video_recorder.record(time_step.observation)
 
             episode_step += 1
             self._global_step += 1

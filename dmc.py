@@ -157,16 +157,23 @@ class EncoderStackWrapper(dm_env.Environment):
         agent_obs = np.array(self.agent_obs, dtype=np.uint8)
         return agent_obs, real_obs
 
-    def compute_episode_reward(self):
+    def compute_obs_and_rewards(self):
         time_step = self.expert_env.reset()
         expert_obs = [self.expert_env.physics.render(height=self.im_h, width=self.im_w, camera_id=0)]
         with torch.no_grad():
             while not time_step.last():
                 time_step = self.expert_env.step(self.expert.act(time_step.observation, 1, eval_mode=True))
                 expert_obs.append(self.expert_env.physics.render(height=self.im_h, width=self.im_w, camera_id=0))
+        expert_obs = np.array(expert_obs, dtype=np.uint8)
 
-        expert_obs = np.array(expert_obs, dtype=np.float32)
-        agent_obs = np.array(self.agent_obs, dtype=np.float32)
+        self.real_env.reset()
+        real_obs = [self.real_env.physics.render(height=self.im_h, width=self.im_w, camera_id=0)]
+        for a in self.agent_actions:
+            self.real_env.step(a)
+            real_obs.append(self.real_env.physics.render(height=self.im_h, width=self.im_w, camera_id=0))
+        real_obs = np.array(real_obs, dtype=np.uint8)
+
+        agent_obs = np.array(self.agent_obs, dtype=np.uint8)
 
         self.encoder.eval()
         with torch.no_grad():
@@ -174,14 +181,13 @@ class EncoderStackWrapper(dm_env.Environment):
                 torch.tensor(expert_obs.transpose(0, 3, 1, 2) , dtype=torch.float, device=utils.device()))
             expert_states = expert_states.cpu().numpy()
             expert_seq_states = expert_seq_states.cpu().numpy()
-
             agent_states, agent_seq_states = self.encoder.encode(
                 torch.tensor(agent_obs.transpose(0, 3, 1, 2), dtype=torch.float, device=utils.device()))
             agent_states = agent_states.cpu().numpy()
             agent_seq_states = agent_seq_states.cpu().numpy()
-
         rewards = - (np.linalg.norm(expert_states - agent_states, axis=1) + np.linalg.norm(expert_seq_states - agent_seq_states, axis=1))
-        return rewards
+
+        return rewards, agent_obs, real_obs, expert_obs
 
     def reset(self) -> TimeStep:
         time_step = self._env.reset()

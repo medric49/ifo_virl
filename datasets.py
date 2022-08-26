@@ -32,9 +32,10 @@ class VideoDataset(torch.utils.data.IterableDataset):
 
     def _sample(self):
         video_i_path, video_n_path = random.choices(self._files, k=2)
-        video_i = np.load(video_i_path)[0, :self._episode_len]
-        video_p = np.load(video_i_path)[1, :self._episode_len]
-        video_n = np.load(video_n_path)[0, :self._episode_len]
+        v1, v2 = random.choices([0, 1])
+        video_i = np.load(video_i_path)[v1, :self._episode_len]
+        video_p = np.load(video_i_path)[v2, :self._episode_len]
+        video_n = np.load(video_n_path)[random.choice([0, 1, 2]), :self._episode_len]
 
         if tuple(video_i.shape[1:3]) != (self.im_h, self.im_w):
             video_i = VideoDataset.resize(video_i, self.im_w, self.im_h)
@@ -60,13 +61,14 @@ class VideoDataset(torch.utils.data.IterableDataset):
         return frame_list
 
     @staticmethod
-    def augment(video_i: torch.Tensor, video_n: torch.Tensor):
+    def augment(video_i: torch.Tensor, video_p: torch.Tensor, video_n: torch.Tensor):
         T = video_i.shape[1]
         p_list = [0.05 for i in range(T)]
         indices = [i for i in range(T) if np.random.rand() > p_list[i]]
         video_i = video_i[:, indices, :, :, :]
+        video_p = video_p[:, indices, :, :, :]
         video_n = video_n[:, indices, :, :, :]
-        return video_i, video_n
+        return video_i, video_p, video_n
 
     def __iter__(self) -> Iterator[T_co]:
         while True:
