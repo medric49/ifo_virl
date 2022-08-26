@@ -74,8 +74,8 @@ class ViRLModel(nn.Module):
         h_p_seq, hidden_p = self.lstm_enc(e_p_seq)
         h_n_seq, hidden_n = self.lstm_enc(e_n_seq)
 
-        e0_i_seq = self.lstm_dec(h_i_seq, hidden_i, T)
-        e0_p_seq = self.lstm_dec(h_p_seq, hidden_p, T)
+        e0_i_seq = self.lstm_dec(h_i_seq, T)
+        e0_p_seq = self.lstm_dec(h_p_seq, T)
 
         video0_i = self._decode(e0_i_seq)
         video0_p = self._decode(e0_p_seq)

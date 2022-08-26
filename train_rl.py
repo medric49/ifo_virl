@@ -172,7 +172,10 @@ class Workspace:
                     reward = episode_rewards[i] if i != 0 else 0.
                     self.replay_storage.add(ts._replace(reward=reward))
 
-                imageio.mimwrite(self.work_dir / 'train_video', np.concatenate([agent_obs, real_obs, expert_obs], axis=2), format='mp4', fps=20)
+                episode_video = np.concatenate([agent_obs, real_obs, expert_obs], axis=2)
+                video_dir = self.work_dir / 'train_video'
+                video_dir.mkdir(exist_ok=True, parents=True)
+                imageio.mimwrite(video_dir / f'{self.global_frame}.mp4', episode_video, format='mp4', fps=20)
                 np.save(self.expert_video_dir / f'{int(time.time() * 1000)}', np.array([agent_obs, real_obs, expert_obs], dtype=np.uint8))
 
                 self.dataset.update_files(max_num_video=self.cfg.max_num_encoder_videos)

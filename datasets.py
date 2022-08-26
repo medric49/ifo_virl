@@ -32,7 +32,7 @@ class VideoDataset(torch.utils.data.IterableDataset):
 
     def _sample(self):
         video_i_path, video_n_path = random.choices(self._files, k=2)
-        v1, v2 = random.choices([0, 1])
+        v1, v2 = random.choices([0, 1], k=2)
         video_i = np.load(video_i_path)[v1, :self._episode_len]
         video_p = np.load(video_i_path)[v2, :self._episode_len]
         video_n = np.load(video_n_path)[random.choice([0, 1, 2]), :self._episode_len]
