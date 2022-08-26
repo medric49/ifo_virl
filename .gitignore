@@ -1,0 +1,13 @@
+.idea
+__pycache__
+videos
+env
+exp_local
+rl_exp_local
+notebooks
+
+tmp
+experts
+
+venv
+

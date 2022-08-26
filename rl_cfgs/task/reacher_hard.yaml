@@ -1,0 +1,16 @@
+defaults:
+  - medium
+  - _self_
+
+task_name: reacher_hard
+exp_group: reacher_hard
+
+expert_file: exp_local/${task_name}/1/snapshot.pt
+video_dir: videos/${exp_group}/train/0
+xml_path: domain_xmls/reacher.xml
+
+enc_batch_size: 16
+episode_len: 60
+
+context_changer:
+  _target_: context_changers.ReacherHardContextChanger
