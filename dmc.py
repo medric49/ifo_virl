@@ -147,16 +147,6 @@ class EncoderStackWrapper(dm_env.Environment):
 
         self.frame_stack = self._env.observation_spec().shape[0] // 3
 
-    def make_multivers_observations(self):
-        self.real_env.reset()
-        real_obs = [self.real_env.physics.render(height=self.im_h, width=self.im_w, camera_id=0)]
-        for a in self.agent_actions:
-            self.real_env.step(a)
-            real_obs.append(self.real_env.physics.render(height=self.im_h, width=self.im_w, camera_id=0))
-        real_obs = np.array(real_obs, dtype=np.uint8)
-        agent_obs = np.array(self.agent_obs, dtype=np.uint8)
-        return agent_obs, real_obs
-
     def compute_obs_and_rewards(self):
         time_step = self.expert_env.reset()
         expert_obs = [self.expert_env.physics.render(height=self.im_h, width=self.im_w, camera_id=0)]

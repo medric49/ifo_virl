@@ -260,7 +260,10 @@ class DrQV2Agent:
         return metrics
 
     @staticmethod
-    def load(file):
+    def load(file, key=None):
         with open(file, 'rb') as f:
             payload = torch.load(f)
-        return payload['agent']
+        if not key:
+            return payload['agent']
+        else:
+            return payload[key]
