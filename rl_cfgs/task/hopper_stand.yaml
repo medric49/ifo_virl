@@ -1,0 +1,16 @@
+defaults:
+  - medium
+  - _self_
+
+task_name: hopper_stand
+exp_group: hopper_stand
+
+expert_file: exp_local/${task_name}/1/snapshot.pt
+ct_file: ct_exp_local/${exp_group}/1/snapshot.pt
+video_dir: videos/${exp_group}/train/0
+
+enc_batch_size: 16
+episode_len: 60
+
+context_changer:
+  _target_: context_changers.NullContextChanger

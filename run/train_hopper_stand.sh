@@ -1,0 +1,1 @@
+python3 train_rl.py task=hopper_stand
